@@ -369,13 +369,13 @@
             if (generatedCards.length === 0) return;
 
             if (generatedCards.length === 1) {
-                const cardW = 600, cardH = 840;
+                const cardW = 250, cardH = 300;
                 canvas.width = cardW; canvas.height = cardH;
                 await drawCard(ctx, generatedCards[0], 0, 0, cardW, cardH);
                 const link = document.createElement('a'); link.download = `meme-card-${generatedCards[0].rarity.name.toLowerCase()}.png`;
                 link.href = canvas.toDataURL('image/png'); link.click();
             } else {
-                const cardW = 600, cardH = 840, cols = 3, padding = 20;
+                const cardW = 250, cardH = 300, cols = 3, padding = 20;
                 const rows = Math.ceil(generatedCards.length / cols);
                 canvas.width = (cardW * cols) + (padding * (cols + 1));
                 canvas.height = (cardH * rows) + (padding * (rows + 1));
