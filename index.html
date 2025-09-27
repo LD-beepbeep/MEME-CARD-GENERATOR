@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>Meme Trading Card Generator</title>
+    <style>
+        * { margin:0;padding:0;box-sizing:border-box; }
+        body { font-family: 'Arial Black', sans-serif; background: linear-gradient(135deg,#667eea 0%,#764ba2 100%); min-height:100vh; display:flex; justify-content:center; align-items:center; padding:20px; }
+        .container{ background: rgba(255,255,255,0.95); border-radius:20px; padding:40px; max-width:700px; width:100%; box-shadow:0 20px 60px rgba(0,0,0,0.3); }
+        h1{ text-align:center; color:#333; margin-bottom:30px; text-transform:uppercase; font-size:28px; text-shadow:2px 2px 4px rgba(0,0,0,0.1); }
+        .mode-selector { display:flex; gap:10px; margin-bottom:20px; }
+        .mode-btn{ flex:1; padding:12px; font-size:16px; background:white; color:#667eea; border:3px solid #667eea; border-radius:10px; cursor:pointer; font-weight:bold; transition:all .3s; }
+        .mode-btn.active{ background:#667eea; color:white; }
+        .upload-section{ margin-bottom:30px; }
+        .upload-box{ border:3px dashed #667eea; border-radius:15px; padding:20px; text-align:center; cursor:pointer; transition:all .3s; background:#f8f9ff; position:relative; }
+        .upload-box:hover{ border-color:#764ba2; background:#f0f2ff; transform:scale(1.01); }
+        .upload-box.has-image{ border-style:solid; background:#e8ebff; }
+        .upload-icon{ font-size:48px; margin-bottom:10px; }
+        input[type="file"]{ display:none; }
+        .name-inputs{ max-height:400px; overflow-y:auto; margin-bottom:20px; padding-top:10px; }
+        input[type="text"]{ width:100%; padding:12px; font-size:16px; border:3px solid #667eea; border-radius:10px; margin-bottom:10px; font-family:'Arial Black',sans-serif; text-transform:uppercase; }
+        button{ width:100%; padding:15px; font-size:20px; font-weight:bold; background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); color:white; border:none; border-radius:10px; cursor:pointer; text-transform:uppercase; transition:all .3s; font-family:'Arial Black',sans-serif; box-shadow:0 4px 15px rgba(102,126,234,0.4); }
+        button:hover:not(:disabled){ transform:translateY(-2px); box-shadow:0 6px 20px rgba(102,126,234,0.6); }
+        button:disabled{ opacity:.5; cursor:not-allowed; }
+        .secondary-btn{ background:#fff; color:#667eea; border:3px solid #667eea; margin-top:10px; }
+        .secondary-btn:hover:not(:disabled){ background:#f0f2ff; }
+        .card-container{ display:none; text-align:center; animation:slideIn .5s ease-out; }
+        @keyframes slideIn { from{ opacity:0; transform:translateY(20px);} to{ opacity:1; transform:translateY(0);} }
+        .cards-display{ display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin-bottom:20px; max-height:600px; overflow-y:auto; }
+        .card{ width:250px; height:350px; border-radius:15px; position:relative; box-shadow:0 10px 30px rgba(0,0,0,0.3); overflow:hidden; display:inline-block; }
+        .card-border{ width:100%; height:100%; padding:12px; border-radius:15px; position:relative; display:flex; flex-direction:column; align-items:center; }
+        .rarity-label{ background:white; padding:6px 16px; border-radius:20px; font-size:12px; font-weight:bold; text-transform:uppercase; margin-bottom:8px; color:#333; box-shadow:0 2px 4px rgba(0,0,0,0.2); }
+        .card-image-container{ width:90%; height:160px; background:linear-gradient(to bottom,#87CEEB 0%,#87CEEB 60%,#90EE90 60%,#228B22 100%); border-radius:12px; position:relative; overflow:hidden; margin-bottom:8px; border:3px solid rgba(255,255,255,0.5); }
+        .card-image{ width:100%; height:100%; object-fit:cover; }
+        .rarity-info{ background:white; padding:4px 12px; border-radius:12px; font-size:10px; font-weight:bold; margin-bottom:8px; color:#333; }
+        .dots{ display:flex; justify-content:center; gap:4px; margin:8px 0; }
+        .dot{ width:6px; height:6px; border-radius:50%; background:white; opacity:0.7; }
+        .meme-name{ background:white; padding:8px 16px; border-radius:12px; font-size:14px; font-weight:bold; margin-bottom:8px; text-transform:uppercase; color:#333; max-width:90%; word-break:break-word; }
+        .card-footer{ background:white; padding:4px 12px; border-radius:12px; font-size:8px; font-weight:bold; opacity:.8; color:#333; }
+        .celebration{ position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); font-size:60px; font-weight:bold; color:white; text-shadow:3px 3px 10px rgba(0,0,0,0.5); animation:celebrate 1s ease-out; pointer-events:none; z-index:1000; display:none; }
+        @keyframes celebrate{ 0%{ transform:translate(-50%,-50%) scale(0) rotate(0deg);} 50%{ transform:translate(-50%,-50%) scale(1.5) rotate(180deg);} 100%{ transform:translate(-50%,-50%) scale(1) rotate(360deg);} }
+        #downloadCanvas{ display:none; }
+        .common-bg{ background: linear-gradient(135deg,#636e72 0%,#95a5a6 100%); }
+        .uncommon-bg{ background: linear-gradient(135deg,#00b894 0%,#55efc4 100%); }
+        .rare-bg{ background: linear-gradient(135deg,#a29bfe 0%,#d6a2e8 100%); }
+        .epic-bg{ background: linear-gradient(135deg,#6c5ce7 0%,#a29bfe 100%); }
+        .impossible-bg{ background: linear-gradient(135deg,#ee5a6f 0%,#f53b57 100%); }
+        .legendary-bg{ background: linear-gradient(135deg,#ffd32c 0%,#ffb142 100%); }
+        .expensive-bg{ background: linear-gradient(135deg,#3dc1d3 0%,#c44569 50%,#3c6382 100%); }
+        .divine-bg{ background: linear-gradient(135deg,#3d3d6b 0%,#511845 100%); }
+        .stats{ background:rgba(255,255,255,0.9); padding:15px; border-radius:10px; margin-bottom:20px; text-align:center; }
+        .stats h3{ margin-bottom:10px; color:#333; }
+        .stats-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:10px; font-size:12px; }
+        .stat-item{ padding:5px; border-radius:5px; font-weight:bold; color:white; text-align:center; }
+
+        /* bulk inline preview styles */
+        .bulk-item{ display:flex; align-items:center; gap:12px; margin-bottom:10px; }
+        .bulk-thumb{ width:84px; height:84px; object-fit:cover; border-radius:8px; border:2px solid rgba(0,0,0,0.08); box-shadow:0 2px 6px rgba(0,0,0,0.12); }
+        .bulk-meta{ display:flex; flex-direction:column; gap:6px; width:100%; }
+        .bulk-filename{ font-size:12px; color:#333; font-weight:bold; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .bulk-input { width:100%; }
+
+        /* small screens tweak */
+        @media (max-width:600px){ .bulk-item{ flex-direction:column; align-items:flex-start; } .bulk-thumb{ width:100%; height:120px; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎴 Meme Card Generator</h1>
+
+        <div class="mode-selector">
+            <button class="mode-btn active" id="singleMode">Single Card</button>
+            <button class="mode-btn" id="bulkMode">Bulk Mode (9 Cards)</button>
+        </div>
+
+        <div class="upload-section" id="uploadSection">
+            <div class="upload-box" id="uploadBox" title="Click to upload">
+                <div class="upload-icon">📸</div>
+                <p id="uploadText">Click to upload your meme photo</p>
+            </div>
+
+            <br>
+            <div class="name-inputs" id="nameInputs">
+                <input type="text" id="memeName" placeholder="Enter your meme name" maxlength="20">
+            </div>
+
+            <button id="generateBtn" disabled>Generate My Card!</button>
+        </div>
+
+        <div class="card-container" id="cardContainer">
+            <div class="stats" id="stats" style="display:none;">
+                <h3>Your Collection Stats:</h3>
+                <div class="stats-grid" id="statsGrid"></div>
+            </div>
+            <div class="cards-display" id="cardsDisplay"></div>
+            <button id="downloadBtn">Download Card(s) 📥</button>
+            <button id="newCardBtn" class="secondary-btn">Make More Cards 🔄</button>
+        </div>
+    </div>
+
+    <div class="celebration" id="celebration"></div>
+    <canvas id="downloadCanvas"></canvas>
+
+    <script>
+        const rarities = [
+            { name: 'Common', points: 10, class: 'common-bg', weight: 40 },
+            { name: 'Uncommon', points: 20, class: 'uncommon-bg', weight: 25 },
+            { name: 'Rare', points: 30, class: 'rare-bg', weight: 15 },
+            { name: 'Epic', points: 40, class: 'epic-bg', weight: 10 },
+            { name: 'Impossible', points: 80, class: 'impossible-bg', weight: 5 },
+            { name: 'Legendary', points: 60, class: 'legendary-bg', weight: 3 },
+            { name: 'Expensive', points: 100, class: 'expensive-bg', weight: 1.5 },
+            { name: 'Divine', points: 50, class: 'divine-bg', weight: 0.5 }
+        ];
+
+        let uploadedImages = []; // array of { dataUrl, name }
+        let generatedCards = [];
+        let isBulkMode = false;
+        let imageInput = null;
+
+        // DOM refs
+        const uploadBox = document.getElementById('uploadBox');
+        const uploadText = document.getElementById('uploadText');
+        const nameInputs = document.getElementById('nameInputs');
+        const generateBtn = document.getElementById('generateBtn');
+        const uploadSection = document.getElementById('uploadSection');
+        const cardContainer = document.getElementById('cardContainer');
+        const cardsDisplay = document.getElementById('cardsDisplay');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const newCardBtn = document.getElementById('newCardBtn');
+        const celebration = document.getElementById('celebration');
+        const singleMode = document.getElementById('singleMode');
+        const bulkMode = document.getElementById('bulkMode');
+        const stats = document.getElementById('stats');
+        const statsGrid = document.getElementById('statsGrid');
+
+        // create and attach a file input
+        function createFileInput() {
+            // remove existing
+            const existing = uploadBox.querySelector('#imageInput');
+            if (existing) existing.remove();
+
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.id = 'imageInput';
+            input.accept = 'image/*';
+            if (isBulkMode) input.setAttribute('multiple', 'multiple');
+            input.addEventListener('change', handleFilesChange);
+            uploadBox.appendChild(input);
+            imageInput = input;
+
+            uploadBox.onclick = () => { if (imageInput) imageInput.click(); };
+        }
+
+        createFileInput();
+
+        singleMode.addEventListener('click', () => {
+            isBulkMode = false;
+            singleMode.classList.add('active');
+            bulkMode.classList.remove('active');
+            resetUpload();
+            uploadText.textContent = 'Click to upload your meme photo';
+            createFileInput();
+        });
+
+        bulkMode.addEventListener('click', () => {
+            isBulkMode = true;
+            bulkMode.classList.add('active');
+            singleMode.classList.remove('active');
+            resetUpload();
+            uploadText.textContent = 'Click to upload up to 9 meme photos';
+            createFileInput();
+        });
+
+        function handleFilesChange(e) {
+            const files = Array.from(e.target.files).slice(0, 9);
+            if (files.length === 0) return;
+
+            uploadedImages = [];
+            let loadedCount = 0;
+            nameInputs.innerHTML = '';
+
+            files.forEach((file, index) => {
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    uploadedImages[index] = { dataUrl: ev.target.result, name: file.name || `image-${index+1}` };
+                    loadedCount++;
+
+                    // when all loaded, render inputs & previews
+                    if (loadedCount === files.length) {
+                        uploadBox.classList.add('has-image');
+                        uploadText.textContent = `${files.length} image(s) uploaded! Click to change`;
+
+                        if (!isBulkMode) {
+                            // single mode preview + single input
+                            const preview = document.createElement('div');
+                            preview.style.display = 'flex';
+                            preview.style.flexDirection = 'column';
+                            preview.style.alignItems = 'center';
+
+                            const thumb = document.createElement('img');
+                            thumb.src = uploadedImages[0].dataUrl;
+                            thumb.className = 'bulk-thumb';
+                            preview.appendChild(thumb);
+
+                            const filename = document.createElement('div');
+                            filename.className = 'bulk-filename';
+                            filename.textContent = uploadedImages[0].name;
+                            preview.appendChild(filename);
+
+                            nameInputs.appendChild(preview);
+
+                            const single = document.createElement('input');
+                            single.type = 'text';
+                            single.id = 'memeName';
+                            single.placeholder = 'Enter your meme name';
+                            single.maxLength = 20;
+                            single.addEventListener('input', checkReady);
+                            // optionally prefill from filename
+                            const base = (uploadedImages[0].name || '').replace(/\.[^/.]+$/, '');
+                            single.value = base ? base.substring(0,20) : '';
+                            nameInputs.appendChild(single);
+                        } else {
+                            // bulk mode: for each image, show thumbnail next to input
+                            for (let i = 0; i < uploadedImages.length; i++) {
+                                const imgObj = uploadedImages[i];
+                                const wrapper = document.createElement('div');
+                                wrapper.className = 'bulk-item';
+
+                                const thumb = document.createElement('img');
+                                thumb.src = imgObj.dataUrl;
+                                thumb.className = 'bulk-thumb';
+                                thumb.alt = imgObj.name;
+
+                                const meta = document.createElement('div');
+                                meta.className = 'bulk-meta';
+
+                                const filenameDiv = document.createElement('div');
+                                filenameDiv.className = 'bulk-filename';
+                                filenameDiv.textContent = imgObj.name;
+
+                                const input = document.createElement('input');
+                                input.type = 'text';
+                                input.placeholder = `Meme name #${i+1}`;
+                                input.maxLength = 20;
+                                input.className = 'meme-name-input bulk-input';
+                                // prefill with filename base
+                                const base = (imgObj.name || '').replace(/\.[^/.]+$/, '');
+                                input.value = base ? base.substring(0,20) : '';
+                                input.addEventListener('input', checkReady);
+
+                                meta.appendChild(filenameDiv);
+                                meta.appendChild(input);
+
+                                wrapper.appendChild(thumb);
+                                wrapper.appendChild(meta);
+
+                                nameInputs.appendChild(wrapper);
+                            }
+                        }
+
+                        checkReady();
+                    }
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function checkReady() {
+            const hasImages = uploadedImages.length > 0;
+            if (!isBulkMode) {
+                const singleName = document.getElementById('memeName');
+                generateBtn.disabled = !(hasImages && singleName && singleName.value.trim());
+            } else {
+                const nameInputElements = document.querySelectorAll('.meme-name-input');
+                const hasAllNames = Array.from(nameInputElements).every(input => input.value.trim());
+                generateBtn.disabled = !(hasImages && hasAllNames);
+            }
+        }
+
+        document.getElementById('memeName')?.addEventListener('input', checkReady);
+
+        function getRandomRarity() {
+            const totalWeight = rarities.reduce((sum, r) => sum + r.weight, 0);
+            let random = Math.random() * totalWeight;
+            for (const rarity of rarities) {
+                random -= rarity.weight;
+                if (random <= 0) return rarity;
+            }
+            return rarities[0];
+        }
+
+        document.getElementById('generateBtn').addEventListener('click', generateCards);
+
+        function generateCards() {
+            generatedCards = [];
+            cardsDisplay.innerHTML = '';
+
+            const useCount = isBulkMode ? uploadedImages.length : Math.min(1, uploadedImages.length);
+
+            let names = [];
+            if (!isBulkMode) {
+                const singleName = document.getElementById('memeName').value.trim();
+                names = [singleName];
+            } else {
+                const nameInputElements = document.querySelectorAll('.meme-name-input');
+                names = Array.from(nameInputElements).map(i => i.value.trim());
+            }
+
+            let hasRareCard = false;
+            const rarityCount = {};
+
+            for (let i = 0; i < useCount; i++) {
+                const imgObj = uploadedImages[i];
+                const rarity = getRandomRarity();
+                const name = isBulkMode ? (names[i] || `MEME ${i+1}`) : (names[0] || 'MEME');
+                rarityCount[rarity.name] = (rarityCount[rarity.name] || 0) + 1;
+                if (rarity.points >= 50) hasRareCard = true;
+
+                const cardData = { image: imgObj.dataUrl, name, rarity };
+                generatedCards.push(cardData);
+
+                const cardDiv = document.createElement('div');
+                cardDiv.className = 'card';
+                cardDiv.innerHTML = `
+                    <div class="card-border ${rarity.class}">
+                        <div class="rarity-label">${rarity.name}</div>
+                        <div class="card-image-container">
+                            <img src="${imgObj.dataUrl}" class="card-image" alt="Meme">
+                        </div>
+                        <div class="rarity-info">1/${rarity.points} RARITY</div>
+                        <div class="dots">${Array(12).fill('<div class="dot"></div>').join('')}</div>
+                        <div class="meme-name">${escapeHtml(name)}</div>
+                        <div class="card-footer">© MEME TRADING CARDS</div>
+                    </div>
+                `;
+                cardsDisplay.appendChild(cardDiv);
+            }
+
+            if (isBulkMode && generatedCards.length > 1) {
+                stats.style.display = 'block';
+                statsGrid.innerHTML = '';
+                for (const [rarityName, count] of Object.entries(rarityCount)) {
+                    const rarityData = rarities.find(r => r.name === rarityName);
+                    const statDiv = document.createElement('div');
+                    statDiv.className = `stat-item ${rarityData ? rarityData.class : ''}`;
+                    statDiv.textContent = `${rarityName}: ${count}`;
+                    statsGrid.appendChild(statDiv);
+                }
+            }
+
+            if (hasRareCard) {
+                celebration.textContent = 'GOD PULLS!!! 🎉';
+                celebration.style.display = 'block';
+                setTimeout(() => celebration.style.display = 'none', 1500);
+            }
+
+            uploadSection.style.display = 'none';
+            cardContainer.style.display = 'block';
+        }
+
+        // download logic (same as before): wait for draw completions
+        const downloadBtnEl = document.getElementById('downloadBtn');
+        downloadBtnEl.addEventListener('click', async () => {
+            const canvas = document.getElementById('downloadCanvas');
+            const ctx = canvas.getContext('2d');
+
+            if (generatedCards.length === 0) return;
+
+            if (generatedCards.length === 1) {
+                const cardW = 600, cardH = 840;
+                canvas.width = cardW; canvas.height = cardH;
+                await drawCard(ctx, generatedCards[0], 0, 0, cardW, cardH);
+                const link = document.createElement('a'); link.download = `meme-card-${generatedCards[0].rarity.name.toLowerCase()}.png`;
+                link.href = canvas.toDataURL('image/png'); link.click();
+            } else {
+                const cardW = 600, cardH = 840, cols = 3, padding = 20;
+                const rows = Math.ceil(generatedCards.length / cols);
+                canvas.width = (cardW * cols) + (padding * (cols + 1));
+                canvas.height = (cardH * rows) + (padding * (rows + 1));
+                ctx.fillStyle = 'white'; ctx.fillRect(0,0,canvas.width,canvas.height);
+
+                const promises = [];
+                generatedCards.forEach((card, idx) => {
+                    const col = idx % cols; const row = Math.floor(idx / cols);
+                    const x = (col * cardW) + (padding * (col + 1));
+                    const y = (row * cardH) + (padding * (row + 1));
+                    promises.push(drawCard(ctx, card, x, y, cardW, cardH));
+                });
+
+                await Promise.all(promises);
+                const link = document.createElement('a'); link.download = 'meme-cards-collection.png';
+                link.href = canvas.toDataURL('image/png'); link.click();
+            }
+        });
+
+        function drawCard(ctx, cardData, x, y, width, height) {
+            return new Promise((resolve) => {
+                const colors = {
+                    'common-bg': ['#636e72', '#95a5a6'], 'uncommon-bg': ['#00b894', '#55efc4'], 'rare-bg': ['#a29bfe', '#d6a2e8'],
+                    'epic-bg': ['#6c5ce7', '#a29bfe'], 'impossible-bg': ['#ee5a6f', '#f53b57'], 'legendary-bg': ['#ffd32c', '#ffb142'],
+                    'expensive-bg': ['#3dc1d3', '#c44569'], 'divine-bg': ['#3d3d6b', '#511845']
+                };
+                const [c1, c2] = colors[cardData.rarity.class] || ['#667eea', '#764ba2'];
+                const grad = ctx.createLinearGradient(x,y,x+width,y+height);
+                grad.addColorStop(0,c1); grad.addColorStop(1,c2);
+                ctx.fillStyle = grad; roundRect(ctx,x,y,width,height,20); ctx.fill();
+
+                const innerX = x + 30, innerY = y + 30, innerWidth = width - 60;
+                ctx.fillStyle = 'white'; roundRect(ctx, innerX + innerWidth/4, innerY, innerWidth/2, 80, 15); ctx.fill();
+                ctx.fillStyle = '#333'; ctx.font = 'bold 40px Arial'; ctx.textAlign = 'center'; ctx.fillText(cardData.rarity.name.toUpperCase(), x + width/2, innerY + 55);
+
+                const imgY = innerY + 100, imgH = 350;
+                ctx.fillStyle = '#87CEEB'; roundRect(ctx, innerX, imgY, innerWidth, imgH, 15); ctx.fill();
+
+                const img = new Image(); img.crossOrigin = 'anonymous';
+                img.onload = function() {
+                    ctx.save(); roundRect(ctx, innerX, imgY, innerWidth, imgH, 15); ctx.clip(); ctx.drawImage(img, innerX, imgY, innerWidth, imgH); ctx.restore();
+
+                    const rarityY = imgY + imgH + 20;
+                    ctx.fillStyle = 'white'; roundRect(ctx, innerX + innerWidth/4, rarityY, innerWidth/2, 50, 10); ctx.fill();
+                    ctx.fillStyle = '#333'; ctx.font = 'bold 28px Arial'; ctx.fillText(`1/${cardData.rarity.points} RARITY`, x + width/2, rarityY + 35);
+
+                    const dotsY = rarityY + 70; ctx.fillStyle = 'white';
+                    for (let i=0;i<12;i++){ ctx.beginPath(); ctx.arc(innerX + (innerWidth/12 * i) + innerWidth/24, dotsY, 8, 0, Math.PI*2); ctx.fill(); }
+
+                    const nameY = dotsY + 40; ctx.fillStyle = 'white'; roundRect(ctx, innerX + 20, nameY, innerWidth - 40, 80, 15); ctx.fill();
+                    ctx.fillStyle = '#333'; ctx.font = 'bold 45px Arial'; ctx.fillText(cardData.name.toUpperCase(), x + width/2, nameY + 55);
+
+                    const footerY = nameY + 100; ctx.fillStyle = 'white'; roundRect(ctx, innerX + innerWidth/4, footerY, innerWidth/2, 40, 10); ctx.fill();
+                    ctx.fillStyle = '#333'; ctx.font = 'bold 20px Arial'; ctx.fillText('© MEME TRADING CARDS', x + width/2, footerY + 28);
+
+                    resolve();
+                };
+                img.onerror = function(){ resolve(); };
+                img.src = cardData.image;
+            });
+        }
+
+        function roundRect(ctx,x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y); ctx.quadraticCurveTo(x+w,y,x+w,y+r); ctx.lineTo(x+w,y+h-r); ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h); ctx.lineTo(x+r,y+h); ctx.quadraticCurveTo(x,y+h,x,y+h-r); ctx.lineTo(x,y+r); ctx.quadraticCurveTo(x,y,x+r,y); ctx.closePath(); }
+
+        newCardBtn.addEventListener('click', resetUpload);
+
+        function resetUpload(){
+            uploadedImages = [];
+            generatedCards = [];
+            nameInputs.innerHTML = '<input type="text" id="memeName" placeholder="Enter your meme name" maxlength="20">';
+            document.getElementById('memeName').addEventListener('input', checkReady);
+            uploadBox.classList.remove('has-image');
+            uploadText.textContent = isBulkMode ? 'Click to upload up to 9 meme photos' : 'Click to upload your meme photo';
+            generateBtn.disabled = true; uploadSection.style.display = 'block'; cardContainer.style.display = 'none'; stats.style.display = 'none';
+            // recreate file input
+            createFileInput();
+            checkReady();
+        }
+
+        // Escape helper
+        function escapeHtml(str){ if(!str) return ''; return str.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"})[m]); }
+    </script>
+</body>
+</html>
