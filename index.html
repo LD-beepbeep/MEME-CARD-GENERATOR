@@ -411,30 +411,38 @@
                 ctx.fillStyle = 'white'; roundRect(ctx, innerX + innerWidth/4, innerY, innerWidth/2, 80, 15); ctx.fill();
                 ctx.fillStyle = '#333'; ctx.font = 'bold 40px Arial'; ctx.textAlign = 'center'; ctx.fillText(cardData.rarity.name.toUpperCase(), x + width/2, innerY + 55);
 
-                const imgY = innerY + 100, imgH = 350;
-                ctx.fillStyle = '#87CEEB'; roundRect(ctx, innerX, imgY, innerWidth, imgH, 15); ctx.fill();
+                const img = new Image();
+img.crossOrigin = 'anonymous';
+img.onload = function() {
+    ctx.save();
+    // calculate max image area within card (leave some padding)
+    const padding = width * 0.1;
+    const imgX = x + padding;
+    const imgY = y + padding + 30; // leave space for rarity label
+    const imgW = width - 2 * padding;
+    const imgH = height - 2 * padding - 80; // leave space for footer + name
 
-                const img = new Image(); img.crossOrigin = 'anonymous';
-                img.onload = function() {
-                    ctx.save(); roundRect(ctx, innerX, imgY, innerWidth, imgH, 15); ctx.clip(); ctx.drawImage(img, innerX, imgY, innerWidth, imgH); ctx.restore();
+    // maintain aspect ratio
+    const aspect = img.width / img.height;
+    let drawW = imgW, drawH = imgH;
+    if (imgW / imgH > aspect) {
+        drawW = imgH * aspect;
+        drawH = imgH;
+    } else {
+        drawW = imgW;
+        drawH = imgW / aspect;
+    }
+    const drawX = imgX + (imgW - drawW)/2;
+    const drawY = imgY + (imgH - drawH)/2;
 
-                    const rarityY = imgY + imgH + 20;
-                    ctx.fillStyle = 'white'; roundRect(ctx, innerX + innerWidth/4, rarityY, innerWidth/2, 50, 10); ctx.fill();
-                    ctx.fillStyle = '#333'; ctx.font = 'bold 28px Arial'; ctx.fillText(`1/${cardData.rarity.points} RARITY`, x + width/2, rarityY + 35);
+    ctx.drawImage(img, drawX, drawY, drawW, drawH);
+    ctx.restore();
 
-                    const dotsY = rarityY + 70; ctx.fillStyle = 'white';
-                    for (let i=0;i<12;i++){ ctx.beginPath(); ctx.arc(innerX + (innerWidth/12 * i) + innerWidth/24, dotsY, 8, 0, Math.PI*2); ctx.fill(); }
+    resolve();
+};
+img.onerror = () => resolve();
+img.src = cardData.image;
 
-                    const nameY = dotsY + 40; ctx.fillStyle = 'white'; roundRect(ctx, innerX + 20, nameY, innerWidth - 40, 80, 15); ctx.fill();
-                    ctx.fillStyle = '#333'; ctx.font = 'bold 45px Arial'; ctx.fillText(cardData.name.toUpperCase(), x + width/2, nameY + 55);
-
-                    const footerY = nameY + 100; ctx.fillStyle = 'white'; roundRect(ctx, innerX + innerWidth/4, footerY, innerWidth/2, 40, 10); ctx.fill();
-                    ctx.fillStyle = '#333'; ctx.font = 'bold 20px Arial'; ctx.fillText('© MEME TRADING CARDS', x + width/2, footerY + 28);
-
-                    resolve();
-                };
-                img.onerror = function(){ resolve(); };
-                img.src = cardData.image;
             });
         }
 
