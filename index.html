@@ -206,20 +206,22 @@
             opacity: 0.9;
         }
         .meme-name { 
-            background: white; 
-            padding: 8px 15px; 
-            border-radius: 15px; 
-            font-size: 13px; 
-            font-weight: 900; 
-            margin-bottom: 8px; 
-            text-align: center;
-            color: #2c3e50;
-            max-width: 85%;
-            word-break: break-word;
-            border: 3px solid rgba(44, 62, 80, 0.3);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
+    background: white; 
+    padding: 8px 15px; 
+    border-radius: 15px; 
+    font-size: 11px; /* Reduced from 13px */
+    font-weight: 900; 
+    margin-bottom: 8px; 
+    text-align: center;
+    color: #2c3e50;
+    max-width: 85%;
+    word-break: break-word;
+    border: 3px solid rgba(44, 62, 80, 0.3);
+    text-transform: uppercase;
+    letter-spacing: 0.3px; /* Reduced from 0.5px */
+    line-height: 1.3; /* Add line height for multi-line text */
+    min-height: 30px; /* Ensure consistent height */
+}
         .card-footer { 
             background: white; 
             padding: 4px 12px; 
@@ -431,7 +433,28 @@
                             </div>
                             <div class="rarity-info">1/${card.rarity.points} RARITY</div>
                             <div class="dots">${'<div class="dot"></div>'.repeat(12)}</div>
-                            <div class="meme-name">${escapeHtml(card.name)}</div>
+                            <div class="meme-name">${wrapText(escapeHtml(card.name), 15)}</div>
+
+// Add this helper function before the escapeHtml function:
+function wrapText(text, maxCharsPerLine) {
+    if (text.length <= maxCharsPerLine) return text;
+    
+    const words = text.split(' ');
+    let lines = [];
+    let currentLine = '';
+    
+    for (const word of words) {
+        if ((currentLine + ' ' + word).trim().length <= maxCharsPerLine) {
+            currentLine = (currentLine + ' ' + word).trim();
+        } else {
+            if (currentLine) lines.push(currentLine);
+            currentLine = word;
+        }
+    }
+    if (currentLine) lines.push(currentLine);
+    
+    return lines.slice(0, 2).join('<br>'); // Max 2 lines
+}
                             <div class="card-footer">© MEME TRADING CARDS</div>
                         </div>
                     `;
