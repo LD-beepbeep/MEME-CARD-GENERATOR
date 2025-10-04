@@ -302,147 +302,144 @@
     <canvas id="canvas"></canvas>
     
     <script>
-        const rarities = [
-            { name: 'Common', points: 100, class: 'common-bg', weight: 40 },
-            { name: 'Uncommon', points: 50, class: 'uncommon-bg', weight: 25 },
-            { name: 'Rare', points: 25, class: 'rare-bg', weight: 15 },
-            { name: 'Epic', points: 20, class: 'epic-bg', weight: 10 },
-            { name: 'Impossible', points: 5, class: 'impossible-bg', weight: 5 },
-            { name: 'Legendary', points: 10, class: 'legendary-bg', weight: 3 },
-            { name: 'Expensive', points: 1, class: 'expensive-bg', weight: 1.5 },
-            { name: 'Divine', points: 15, class: 'divine-bg', weight: 0.5 }
-        ];
-        
-        let images = [];
-        let cardData = [];
-        
-        const uploadArea = document.getElementById('uploadArea');
-        const fileInput = document.getElementById('fileInput');
-        const uploadText = document.getElementById('uploadText');
-        const cardsInput = document.getElementById('cardsInput');
-        const generateBtn = document.getElementById('generateBtn');
-        const previewSection = document.getElementById('previewSection');
-        const pagesContainer = document.getElementById('pagesContainer');
-        const pageInfo = document.getElementById('pageInfo');
-        
-        uploadArea.onclick = () => fileInput.click();
-        
-        fileInput.onchange = (e) => {
-            const files = Array.from(e.target.files).slice(0, 100);
-            if (files.length === 0) return;
-            
-            images = [];
-            cardsInput.innerHTML = '';
-            let loaded = 0;
-            
-            files.forEach((file, idx) => {
-                const reader = new FileReader();
-                reader.onload = (ev) => {
-                    images[idx] = { url: ev.target.result, name: file.name };
-                    loaded++;
-                    
-                    if (loaded === files.length) {
-                        displayInputs();
-                        uploadArea.classList.add('active');
-                        uploadText.innerHTML = `<strong>${files.length} images uploaded!</strong><br>Click to change`;
-                        checkReady();
-                    }
-                };
-                reader.readAsDataURL(file);
-            });
-        };
-        
-        function displayInputs() {
-            images.forEach((img, idx) => {
-                const row = document.createElement('div');
-                row.className = 'card-input-row';
-                
-                const thumb = document.createElement('img');
-                thumb.src = img.url;
-                thumb.className = 'card-thumb';
-                
-                const input = document.createElement('input');
-                input.type = 'text';
-                input.placeholder = `Card title #${idx + 1}`;
-                input.maxLength = 25;
-                input.dataset.idx = idx;
-                const baseName = img.name.replace(/\.[^/.]+$/, '').substring(0, 25);
-                input.value = baseName;
-                input.oninput = checkReady;
-                
-                row.appendChild(thumb);
-                row.appendChild(input);
-                cardsInput.appendChild(row);
-            });
-        }
-        
-        function checkReady() {
-            const inputs = cardsInput.querySelectorAll('input');
-            const allFilled = Array.from(inputs).every(inp => inp.value.trim());
-            generateBtn.disabled = !allFilled || images.length === 0;
-        }
-        
-        function getRandomRarity() {
-            const total = rarities.reduce((sum, r) => sum + r.weight, 0);
-            let rand = Math.random() * total;
-            for (const r of rarities) {
-                rand -= r.weight;
-                if (rand <= 0) return r;
-            }
-            return rarities[0];
-        }
-        
-        generateBtn.onclick = () => {
-            cardData = [];
-            const inputs = cardsInput.querySelectorAll('input');
-            
-            inputs.forEach((inp) => {
-                const idx = parseInt(inp.dataset.idx);
-                cardData.push({
-                    image: images[idx].url,
-                    name: inp.value.trim(),
-                    rarity: getRandomRarity()
-                });
-            });
-            
-            displayPages();
-            previewSection.classList.add('active');
-            uploadArea.style.display = 'none';
-            cardsInput.style.display = 'none';
-            generateBtn.style.display = 'none';
-        };
-        
-        function displayPages() {
-            pagesContainer.innerHTML = '';
-            const numPages = Math.ceil(cardData.length / 9);
-            pageInfo.textContent = `Generated ${numPages} page${numPages > 1 ? 's' : ''} (${cardData.length} cards total)`;
-            
-            for (let p = 0; p < numPages; p++) {
-                const pageCards = cardData.slice(p * 9, (p + 1) * 9);
-                const grid = document.createElement('div');
-                grid.className = 'preview-grid';
-                
-                pageCards.forEach(card => {
-                    const cardDiv = document.createElement('div');
-                    cardDiv.className = 'preview-card';
-                    cardDiv.innerHTML = `
-                        <div class="card-border ${card.rarity.class}">
-                            <div class="rarity-label">${card.rarity.name}</div>
-                            <div class="card-image-container">
-                                <img src="${card.image}" class="card-image">
-                            </div>
-                            <div class="rarity-info">1/${card.rarity.points} RARITY</div>
-                            <div class="dots">${'<div class="dot"></div>'.repeat(12)}</div>
-                            <div class="meme-name">${wrapText(escapeHtml(card.name), 15)}</div>
+const rarities = [
+    { name: 'Common', points: 100, class: 'common-bg', weight: 40 },
+    { name: 'Uncommon', points: 50, class: 'uncommon-bg', weight: 25 },
+    { name: 'Rare', points: 25, class: 'rare-bg', weight: 15 },
+    { name: 'Epic', points: 20, class: 'epic-bg', weight: 10 },
+    { name: 'Impossible', points: 5, class: 'impossible-bg', weight: 5 },
+    { name: 'Legendary', points: 10, class: 'legendary-bg', weight: 3 },
+    { name: 'Expensive', points: 1, class: 'expensive-bg', weight: 1.5 },
+    { name: 'Divine', points: 15, class: 'divine-bg', weight: 0.5 }
+];
 
-// Add this helper function before the escapeHtml function:
+let images = [];
+let cardData = [];
+
+const uploadArea = document.getElementById('uploadArea');
+const fileInput = document.getElementById('fileInput');
+const uploadText = document.getElementById('uploadText');
+const cardsInput = document.getElementById('cardsInput');
+const generateBtn = document.getElementById('generateBtn');
+const previewSection = document.getElementById('previewSection');
+const pagesContainer = document.getElementById('pagesContainer');
+const pageInfo = document.getElementById('pageInfo');
+
+uploadArea.onclick = () => fileInput.click();
+
+fileInput.onchange = (e) => {
+    const files = Array.from(e.target.files).slice(0, 100);
+    if (files.length === 0) return;
+
+    images = [];
+    cardsInput.innerHTML = '';
+    let loaded = 0;
+
+    files.forEach((file, idx) => {
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            images[idx] = { url: ev.target.result, name: file.name };
+            loaded++;
+            if (loaded === files.length) {
+                displayInputs();
+                uploadArea.classList.add('active');
+                uploadText.innerHTML = `<strong>${files.length} images uploaded!</strong><br>Click to change`;
+                checkReady();
+            }
+        };
+        reader.readAsDataURL(file);
+    });
+};
+
+function displayInputs() {
+    images.forEach((img, idx) => {
+        const row = document.createElement('div');
+        row.className = 'card-input-row';
+        const thumb = document.createElement('img');
+        thumb.src = img.url;
+        thumb.className = 'card-thumb';
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.placeholder = `Card title #${idx + 1}`;
+        input.maxLength = 25;
+        input.dataset.idx = idx;
+        input.value = img.name.replace(/\.[^/.]+$/, '').substring(0, 25);
+        input.oninput = checkReady;
+        row.appendChild(thumb);
+        row.appendChild(input);
+        cardsInput.appendChild(row);
+    });
+}
+
+function checkReady() {
+    const inputs = cardsInput.querySelectorAll('input');
+    const allFilled = Array.from(inputs).every(inp => inp.value.trim());
+    generateBtn.disabled = !allFilled || images.length === 0;
+}
+
+function getRandomRarity() {
+    const total = rarities.reduce((sum, r) => sum + r.weight, 0);
+    let rand = Math.random() * total;
+    for (const r of rarities) {
+        rand -= r.weight;
+        if (rand <= 0) return r;
+    }
+    return rarities[0];
+}
+
+generateBtn.onclick = () => {
+    cardData = [];
+    const inputs = cardsInput.querySelectorAll('input');
+    inputs.forEach((inp) => {
+        const idx = parseInt(inp.dataset.idx);
+        cardData.push({
+            image: images[idx].url,
+            name: inp.value.trim(),
+            rarity: getRandomRarity()
+        });
+    });
+    displayPages();
+    previewSection.classList.add('active');
+    uploadArea.style.display = 'none';
+    cardsInput.style.display = 'none';
+    generateBtn.style.display = 'none';
+};
+
+function displayPages() {
+    pagesContainer.innerHTML = '';
+    const numPages = Math.ceil(cardData.length / 9);
+    pageInfo.textContent = `Generated ${numPages} page${numPages > 1 ? 's' : ''} (${cardData.length} cards total)`;
+
+    for (let p = 0; p < numPages; p++) {
+        const pageCards = cardData.slice(p * 9, (p + 1) * 9);
+        const grid = document.createElement('div');
+        grid.className = 'preview-grid';
+        pageCards.forEach(card => {
+            const cardDiv = document.createElement('div');
+            cardDiv.className = 'preview-card';
+            cardDiv.innerHTML = `
+                <div class="card-border ${card.rarity.class}">
+                    <div class="rarity-label">${card.rarity.name}</div>
+                    <div class="card-image-container">
+                        <img src="${card.image}" class="card-image">
+                    </div>
+                    <div class="rarity-info">1/${card.rarity.points} RARITY</div>
+                    <div class="dots">${'<div class="dot"></div>'.repeat(12)}</div>
+                    <div class="meme-name">${wrapText(escapeHtml(card.name), 15)}</div>
+                    <div class="card-footer">© MEME TRADING CARDS</div>
+                </div>`;
+            grid.appendChild(cardDiv);
+        });
+        pagesContainer.appendChild(grid);
+    }
+}
+
+// ✅ FIXED: moved helper functions OUTSIDE the template literal
 function wrapText(text, maxCharsPerLine) {
     if (text.length <= maxCharsPerLine) return text;
-    
     const words = text.split(' ');
     let lines = [];
     let currentLine = '';
-    
     for (const word of words) {
         if ((currentLine + ' ' + word).trim().length <= maxCharsPerLine) {
             currentLine = (currentLine + ' ' + word).trim();
@@ -452,223 +449,20 @@ function wrapText(text, maxCharsPerLine) {
         }
     }
     if (currentLine) lines.push(currentLine);
-    
-    return lines.slice(0, 2).join('<br>'); // Max 2 lines
+    return lines.slice(0, 2).join('<br>');
 }
-                            <div class="card-footer">© MEME TRADING CARDS</div>
-                        </div>
-                    `;
-                    grid.appendChild(cardDiv);
-                });
-                
-                pagesContainer.appendChild(grid);
-            }
-        }
-        
-        document.getElementById('downloadBtn').onclick = async () => {
-            const canvas = document.getElementById('canvas');
-            const ctx = canvas.getContext('2d');
-            const dpi = 300;
-            const cmToInch = 0.393701;
-            const cardW = Math.round(6.3 * cmToInch * dpi);
-            const cardH = Math.round(8.8 * cmToInch * dpi);
-            
-            const numPages = Math.ceil(cardData.length / 9);
-            
-            for (let p = 0; p < numPages; p++) {
-                const pageCards = cardData.slice(p * 9, (p + 1) * 9);
-                canvas.width = cardW * 3;
-                canvas.height = cardH * 3;
-                ctx.fillStyle = 'white';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                
-                const drawPromises = pageCards.map((card, idx) => {
-                    const col = idx % 3;
-                    const row = Math.floor(idx / 3);
-                    return drawCard(ctx, card, col * cardW, row * cardH, cardW, cardH);
-                });
-                
-                await Promise.all(drawPromises);
-                
-                const link = document.createElement('a');
-                link.download = `meme-cards-page-${p + 1}.png`;
-                link.href = canvas.toDataURL('image/png');
-                link.click();
-                
-                await new Promise(resolve => setTimeout(resolve, 100));
-            }
-        };
-        
-        document.getElementById('printBtn').onclick = () => {
-            window.print();
-        };
-        
-        document.getElementById('resetBtn').onclick = () => {
-            images = [];
-            cardData = [];
-            cardsInput.innerHTML = '';
-            fileInput.value = '';
-            uploadArea.classList.remove('active');
-            uploadText.innerHTML = 'Click to upload meme images (up to 100)<br><span style="font-size: 12px; color: #666; margin-top: 10px; font-family: Arial, sans-serif; font-weight: normal;">Multiple images will be split into pages of 9 cards each</span>';
-            previewSection.classList.remove('active');
-            uploadArea.style.display = 'block';
-            cardsInput.style.display = 'block';
-            generateBtn.style.display = 'block';
-            generateBtn.disabled = true;
-        };
-        
-        function drawCard(ctx, card, x, y, w, h) {
-            return new Promise((resolve) => {
-                const colors = {
-                    'common-bg': ['#95a5a6', '#bdc3c7'],
-                    'uncommon-bg': ['#00b894', '#55efc4'],
-                    'rare-bg': ['#a29bfe', '#dda2e8'],
-                    'epic-bg': ['#34495e', '#596b7d'],
-                    'impossible-bg': ['#ff6b6b', '#ff8787'],
-                    'legendary-bg': ['#f1c40f', '#f9e79f'],
-                    'expensive-bg': ['#667eea', '#764ba2'],
-                    'divine-bg': ['#00008B', '#4B0082']
-                };
-                
-                const [c1, c2] = colors[card.rarity.class] || ['#667eea', '#764ba2'];
-                const grad = ctx.createLinearGradient(x, y, x + w, y + h);
-                grad.addColorStop(0, c1);
-                grad.addColorStop(1, c2);
-                ctx.fillStyle = grad;
-                roundRect(ctx, x, y, w, h, w * 0.025);
-                ctx.fill();
-                
-                const pad = w * 0.05;
-                const innerX = x + pad;
-                const innerY = y + pad;
-                const innerW = w - pad * 2;
-                
-                // Rarity label
-                ctx.fillStyle = 'white';
-                roundRect(ctx, innerX + innerW * 0.2, innerY, innerW * 0.6, h * 0.09, h * 0.045);
-                ctx.fill();
-                ctx.strokeStyle = '#2c3e50';
-                ctx.lineWidth = w * 0.005;
-                roundRect(ctx, innerX + innerW * 0.2, innerY, innerW * 0.6, h * 0.09, h * 0.045);
-                ctx.stroke();
-                ctx.fillStyle = '#2c3e50';
-                ctx.font = `900 ${h * 0.042}px Arial Black`;
-                ctx.textAlign = 'center';
-                ctx.fillText(card.rarity.name.toUpperCase(), x + w / 2, innerY + h * 0.062);
-                
-                const imgY = innerY + h * 0.11;
-                const imgH = h * 0.42;
-                
-                // Sky and grass background
-                const skyGrad = ctx.createLinearGradient(innerX, imgY, innerX, imgY + imgH);
-                skyGrad.addColorStop(0, '#87CEEB');
-                skyGrad.addColorStop(0.55, '#87CEEB');
-                skyGrad.addColorStop(0.55, '#90EE90');
-                skyGrad.addColorStop(1, '#6aa84f');
-                ctx.fillStyle = skyGrad;
-                roundRect(ctx, innerX, imgY, innerW, imgH, w * 0.02);
-                ctx.fill();
-                
-                // Cloud effect
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
-                ctx.beginPath();
-                ctx.ellipse(innerX + innerW * 0.35, imgY + imgH * 0.2, innerW * 0.15, imgH * 0.08, 0, 0, Math.PI * 2);
-                ctx.fill();
-                
-                // Border for image container
-                ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
-                ctx.lineWidth = w * 0.007;
-                roundRect(ctx, innerX, imgY, innerW, imgH, w * 0.02);
-                ctx.stroke();
-                
-                const img = new Image();
-                img.crossOrigin = 'anonymous';
-                img.onload = () => {
-                    ctx.save();
-                    roundRect(ctx, innerX, imgY, innerW, imgH, w * 0.02);
-                    ctx.clip();
-                    ctx.drawImage(img, innerX, imgY, innerW, imgH);
-                    ctx.restore();
-                    
-                    // Rarity info
-                    const rarityY = imgY + imgH + h * 0.024;
-                    ctx.fillStyle = 'white';
-                    roundRect(ctx, innerX + innerW * 0.18, rarityY, innerW * 0.64, h * 0.065, h * 0.03);
-                    ctx.fill();
-                    ctx.strokeStyle = '#2c3e50';
-                    ctx.lineWidth = w * 0.004;
-                    roundRect(ctx, innerX + innerW * 0.18, rarityY, innerW * 0.64, h * 0.065, h * 0.03);
-                    ctx.stroke();
-                    ctx.fillStyle = '#2c3e50';
-                    ctx.font = `900 ${h * 0.034}px Arial Black`;
-                    ctx.fillText(`1/${card.rarity.points} RARITY`, x + w / 2, rarityY + h * 0.046);
-                    
-                    // Dots
-                    const dotsY = rarityY + h * 0.09;
-                    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-                    for (let i = 0; i < 12; i++) {
-                        ctx.beginPath();
-                        ctx.arc(innerX + (innerW / 13 * (i + 0.5)), dotsY, w * 0.008, 0, Math.PI * 2);
-                        ctx.fill();
-                    }
-                    
-                    // Meme name
-                    const nameY = dotsY + h * 0.05;
-                    ctx.fillStyle = 'white';
-                    roundRect(ctx, innerX + innerW * 0.075, nameY, innerW * 0.85, h * 0.095, h * 0.045);
-                    ctx.fill();
-                    ctx.strokeStyle = 'rgba(44, 62, 80, 0.3)';
-                    ctx.lineWidth = w * 0.005;
-                    roundRect(ctx, innerX + innerW * 0.075, nameY, innerW * 0.85, h * 0.095, h * 0.045);
-                    ctx.stroke();
-                    ctx.fillStyle = '#2c3e50';
-                    ctx.font = `900 ${h * 0.05}px Arial Black`;
-                    ctx.fillText(card.name.toUpperCase(), x + w / 2, nameY + h * 0.065);
-                    
-                    // Footer
-                    const footerY = nameY + h * 0.125;
-                    ctx.fillStyle = 'white';
-                    roundRect(ctx, innerX + innerW * 0.15, footerY, innerW * 0.7, h * 0.05, h * 0.025);
-                    ctx.fill();
-                    ctx.strokeStyle = 'rgba(44, 62, 80, 0.3)';
-                    ctx.lineWidth = w * 0.003;
-                    roundRect(ctx, innerX + innerW * 0.15, footerY, innerW * 0.7, h * 0.05, h * 0.025);
-                    ctx.stroke();
-                    ctx.fillStyle = '#2c3e50';
-                    ctx.font = `900 ${h * 0.027}px Arial Black`;
-                    ctx.fillText('© MEME TRADING CARDS', x + w / 2, footerY + h * 0.036);
-                    
-                    resolve();
-                };
-                img.onerror = resolve;
-                img.src = card.image;
-            });
-        }
-        
-        function roundRect(ctx, x, y, w, h, r) {
-            ctx.beginPath();
-            ctx.moveTo(x + r, y);
-            ctx.lineTo(x + w - r, y);
-            ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-            ctx.lineTo(x + w, y + h - r);
-            ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-            ctx.lineTo(x + r, y + h);
-            ctx.quadraticCurveTo(x, y + h, x, y + h - r);
-            ctx.lineTo(x, y + r);
-            ctx.quadraticCurveTo(x, y, x + r, y);
-            ctx.closePath();
-        }
-        
-        function escapeHtml(str) {
-            if (!str) return '';
-            return str.replace(/[&<>"']/g, m => ({
-                '&': '&amp;',
-                '<': '&lt;',
-                '>': '&gt;',
-                '"': '&quot;',
-                "'": '&#39;'
-            })[m]);
-        }
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/[&<>"']/g, m => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+    })[m]);
+}
+
     </script>
 </body>
 </html>
